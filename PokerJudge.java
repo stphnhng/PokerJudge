@@ -88,7 +88,9 @@ public class PokerJudge{
         //      One Pair: Two cards of same rank, highest non related card is kicker.
         //      High Card: Any hand not in the above hands, highest card is the rank.
 
-        System.out.println("Is Straight Flush?: " + Boolean.toString(isStraightFlush(ranks,suits)));
+        System.out.println("Is Straight?: " + Boolean.toString(isStraight(1,ranks)));
+        System.out.println("Is Straight Flush?: " + Boolean.toString(isStraightFlush(ranks, suits)));
+        System.out.println("Is Royal Flush?: " + Boolean.toString(isRoyalFlush(ranks, suits)));
 
 
         System.out.println(Arrays.toString(ranks));
@@ -116,13 +118,7 @@ public class PokerJudge{
         return true;
     }
 
-    public boolean isStraightFlush(int[] rankCount, int[] suitCount){
-        // Any straight with all 5 cards of the same suit.
-
-        if(!handSameSuit(suitCount)){
-            return false;
-        }
-
+    public boolean isStraight(int startIndex, int[] rankCount){
         boolean possibleStraight = false;
         int handCounter = 0;
         for(int i = 1; i < rankCount.length; i++){
@@ -140,6 +136,19 @@ public class PokerJudge{
                 handCounter = 0;
             }
         }
+        return false;
+    }
+
+    public boolean isStraightFlush(int[] rankCount, int[] suitCount){
+        // Any straight with all 5 cards of the same suit.
+
+        if(!handSameSuit(suitCount)){
+            return false;
+        }
+
+        if(isStraight(1, rankCount)){
+            return true;
+        }
 
         return false;
     }
@@ -151,26 +160,18 @@ public class PokerJudge{
             int[] suitCount: an int array counting each suit and their count in the hand.
     */
     public boolean isRoyalFlush(int[] rankCount, int[] suitCount){
-        // Royal Flush
-        // 10 == J == Q == K == A == Exists
-        // ranks[10] == ranks[11] == ranks[12] == ranks[13] == ranks[14] == 1
-        // Suits are all the same
-        // suits[0] == suits[1] == suit[2] == suits[3] == suits[4] == 1 
-
-        boolean allSameSuit = false;
-
-        for(int i = 10; i < 15; i++){
-            // cards are 10 - J - Q - K - A if not then return false.
-            if(rankCount[i] != 1){
-                return false;
-            }
-        }
+        // Straight from 10 - Ace with all 5 cards of same suit.
 
         // entire hand is the same suit.
         if(!handSameSuit(suitCount)){
             return false;
         }
-        return true;
+
+        if(isStraight(10,rankCount)){
+            return true;
+        }
+
+        return false;
     }
 
 
