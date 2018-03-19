@@ -11,8 +11,6 @@ import java.util.Arrays;
 
 public class PokerJudge{
 
-
-
     // Main Method
     public static void main(String[] args){
         // Declare poker hands here as Strings for usage later in the program.
@@ -54,7 +52,9 @@ public class PokerJudge{
                     break;
                     case 'K': rankIndex = 13;
                     break;
-                    case 'A': rankIndex = 14;
+                    case 'A': 
+                        ranks[1]++; // can also be 1.
+                        rankIndex = 14;
                     break;
                 }
                 ranks[rankIndex]++;
@@ -77,17 +77,15 @@ public class PokerJudge{
             System.exit(1);
         }
         // TODO:
-        //      Royal Flush: straight (10 - Ace) with 5 cards of the same suit
-        //      Straight Flush: Any straight with all 5 cards of the same suit
-        //      Four of a Kind: 4 cards of the same rank, 5th card is kicker
-        //      Full House: 3 cards of the same rank and 2 cards of another rank (highest rank of 3 of a kind determines rank)
-        //      Flush: 5 cards of the same suit (highest card determines rank of flush)
-        //      Straight: 5 consecutive cards of different suits (highest card)
-        //      Three of a Kind: 3 cards of same rank, highest non related card is kicker
-        //      Two Pair: Two cards of same rank with another 2 of same rank, highest non related card is kicker
-        //      One Pair: Two cards of same rank, highest non related card is kicker.
         //      High Card: Any hand not in the above hands, highest card is the rank.
 
+        System.out.println("Highest Card?: " + Integer.toString(highestCard(ranks)));
+        System.out.println("Is One Pair?: " + Boolean.toString(isOnePair(ranks)));
+        System.out.println("Is Two Pair?: " + Boolean.toString(isTwoPair(ranks)));
+        System.out.println("Is Three of a Kind?: " + Boolean.toString(isThreeOfKind(ranks)));
+        System.out.println("Is Full House?: " + Boolean.toString(isFullHouse(ranks)));
+        System.out.println("Is Four of a Kind?: " + Boolean.toString(isFourOfKind(ranks)));
+        System.out.println("Is Flush?: " + Boolean.toString(isFlush(suits)));
         System.out.println("Is Straight?: " + Boolean.toString(isStraight(1,ranks)));
         System.out.println("Is Straight Flush?: " + Boolean.toString(isStraightFlush(ranks, suits)));
         System.out.println("Is Royal Flush?: " + Boolean.toString(isRoyalFlush(ranks, suits)));
@@ -98,30 +96,92 @@ public class PokerJudge{
         return value;
     }
 
-    /*
-        Determines if a given hand's cards are all the same suit.
-        Params:
-            int[] suitCount: an int array counting each suit and their count in the hand.
-    */
-    public boolean handSameSuit(int[] suitCount){
-        boolean allSameSuit = false;
-        for(int i = 0; i < 4; i++){
-            // check if not same suit by checking each suit count
-            // if there is a suit count with 5, set allSameSuit to true.
-            if(suitCount[i] == 5){
-                allSameSuit = true;
+    public int highestCard(int[] rankCount){
+        for(int i = rankCount.length - 1; i>= 0; i--){
+            if(rankCount[i] > 0){
+                return i;
             }
         }
-        if(allSameSuit == false){
-            return false;
-        }
-        return true;
+        return 0;
     }
 
+    public boolean isOnePair(int[] rankCount){
+        for(int i = 0; i < rankCount.length; i++){
+            if(rankCount[i] == 2){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isTwoPair(int[] rankCount){
+        boolean firstPair = false;
+        boolean secondPair = false;
+        for(int i = 0; i < rankCount.length; i++){
+            if(rankCount[i] == 2){
+                firstPair = true;
+            }
+            if(firstPair && rankCount[i] == 2){
+                secondPair = true;
+            }
+        }
+        if(firstPair && secondPair){
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isThreeOfKind(int[] rankCount){
+        // Three of a Kind: 3 cards of same rank, highest non related card is kicker
+        for(int i = 0; i < rankCount.length; i++){
+            if(rankCount[i] == 3){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isFullHouse(int[] rankCount){
+        // Full House: 3 cards of the same rank and 2 cards of another rank (highest rank of 3 of a kind determines rank)
+        boolean threeSame = false;
+        boolean twoSame = false;
+        for(int i = 0; i < rankCount.length; i++){
+            if(rankCount[i] == 3){
+                threeSame = true;
+            }
+            if(rankCount[i] == 2){
+                twoSame = true;
+            }
+        }
+        if(threeSame && twoSame){
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isFourOfKind(int[] rankCount){
+        // Four of a Kind: 4 cards of the same rank, 5th card is kicker
+
+        for(int i = 0; i < rankCount.length; i++){
+            if(rankCount[i] == 4){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+        Determines if a given hand is a Straight.
+        Params:
+            int startIndex: the start point from which the cards will be checked.
+                (i.e start from 1 starts checking for straights from 1 onward.)
+            int[] rankCount: an int array counting each rank and their count in the hand.
+    */
     public boolean isStraight(int startIndex, int[] rankCount){
+        // Straight: 5 consecutive cards of different suits (highest card)
         boolean possibleStraight = false;
         int handCounter = 0;
-        for(int i = 1; i < rankCount.length; i++){
+        for(int i = startIndex; i < rankCount.length; i++){
             if(rankCount[i] == 1){
                 possibleStraight = true;
                 handCounter++;
@@ -139,14 +199,41 @@ public class PokerJudge{
         return false;
     }
 
+    /*
+        Determines if a given hand's cards are all the same suit.
+        Params:
+            int[] suitCount: an int array counting each suit and their count in the hand.
+    */
+    public boolean isFlush(int[] suitCount){
+        // Flush: 5 cards of the same suit (highest card determines rank of flush)
+        boolean allSameSuit = false;
+        for(int i = 0; i < 4; i++){
+            // check if not same suit by checking each suit count
+            // if there is a suit count with 5, set allSameSuit to true.
+            if(suitCount[i] == 5){
+                allSameSuit = true;
+            }
+        }
+        if(allSameSuit == false){
+            return false;
+        }
+        return true;
+    }
+
+    /*
+        Determines if a given hand is a Straight Flush.
+        Params:
+            int[] rankCount: an int array counting each rank and their count in the hand.
+            int[] suitCount: an int array counting each suit and their count in the hand.
+    */
     public boolean isStraightFlush(int[] rankCount, int[] suitCount){
         // Any straight with all 5 cards of the same suit.
 
-        if(!handSameSuit(suitCount)){
+        if(!isFlush(suitCount)){
             return false;
         }
 
-        if(isStraight(1, rankCount)){
+        if(isStraight(1, rankCount)){ // Starts at 1 to check for all cards.
             return true;
         }
 
@@ -154,7 +241,7 @@ public class PokerJudge{
     }
 
     /*
-        Determines if a given hand is a royal flush.
+        Determines if a given hand is a Royal Flush.
         Params:
             int[] rankCount: an int array counting each rank and their count in the hand.
             int[] suitCount: an int array counting each suit and their count in the hand.
@@ -163,11 +250,11 @@ public class PokerJudge{
         // Straight from 10 - Ace with all 5 cards of same suit.
 
         // entire hand is the same suit.
-        if(!handSameSuit(suitCount)){
+        if(!isFlush(suitCount)){
             return false;
         }
 
-        if(isStraight(10,rankCount)){
+        if(isStraight(10,rankCount)){ // Starts at 10.
             return true;
         }
 
