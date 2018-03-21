@@ -13,14 +13,16 @@ java Poker Judge hand1 hand2
 Where hand1 and hand2 are poker hands with 5 cards represented in a two character format: (Value)(Suit).
 An example of this is: AS (Ace)(Spades)
 
-S = Spades
-C = Clubs
-D = Diamonds
-H = Hearts
+#### Suits
+* S = Spades
+* C = Clubs
+* D = Diamonds
+* H = Hearts
 
-2-9 = 2-9
-T = Ten
-J = Jack
-Q = Queen
-K = King
-A = Ace
+#### Values
+* 2-9 = 2-9
+* T = Ten
+* J = Jack
+* Q = Queen
+* K = King
+* A = Ace
