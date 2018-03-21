@@ -27,40 +27,95 @@ public class PokerJudge{
             System.exit(0);
         }
         PokerJudge judge = new PokerJudge();
-        int hand1Value, hand2Value = 0;
-        System.out.println("Hand 1: " + hand1);
-        hand1Value = judge.returnValue(hand1);
-        System.out.println(hand1Value);
-        System.out.println("Hand 2: " + hand2);
-        hand2Value = judge.returnValue(hand2);
-        System.out.println(hand2Value);
+        double h1Value, h2Value = 0;
+        int[] h1Ranks, h1Suits, h2Ranks, h2Suits = null;
 
-        if(hand1Value > hand2Value){
+        h1Ranks = judge.countRanks(hand1);
+        h1Suits = judge.countSuits(hand1);
+        h1Value = judge.getHandValue(h1Ranks, h1Suits);
+
+        h2Ranks = judge.countRanks(hand2);
+        h2Suits = judge.countSuits(hand2);
+        h2Value = judge.getHandValue(h2Ranks, h2Suits);
+
+        // If the hands have the same Poker Hand TYPE.
+        if(h1Value == h2Value){
+            if(judge.isRoyalFlush(h1Ranks, h1Suits)){
+                // If the hand is a Royal Flush.
+                System.out.println("\n\tAll Suits are equal, thus these hands are equal.\n");
+                System.exit(2);
+            }else if(judge.isFourOfKind(h1Ranks) || judge.isThreeOfKind(h1Ranks) || judge.isFullHouse(h1Ranks) || 
+                judge.isStraight(1,h1Ranks) || judge.isFlush(h1Suits)){
+                // If it is a four of kind, three of a kind, full house, straight or flush.
+                // Find highest possible card and if there is a tie, find the next highest.
+                double h1HighValue = judge.highestCard(h1Ranks);
+                double h2HighValue = judge.highestCard(h2Ranks);
+                while(h1HighValue == h2HighValue && h1HighValue != 0){
+                    h1Ranks[judge.highestIndex(h1Ranks)] = 0;
+                    h2Ranks[judge.highestIndex(h2Ranks)] = 0;
+                    h1HighValue = judge.highestCard(h1Ranks);
+                    h2HighValue = judge.highestCard(h2Ranks);
+                }
+                h1Value += h1HighValue;
+                h2Value += h2HighValue;
+            }else if(judge.isTwoPair(h1Ranks) || judge.isOnePair(h1Ranks)){
+                // If the hand is a two pair or one pair.
+                double h1Max = 0.0;
+                double h2Max = 0.0;
+                for(int i = h1Ranks.length - 1; i > 0; i--){
+                    if(h1Ranks[i] == 2 && h1Ranks[i] == h2Ranks[i]){
+                        // if both hands have a pair in the same location.
+                        h1Ranks[i] = 0;
+                        h2Ranks[i] = 0;
+                    }
+                    // If it is a pair, then it is the current max.
+                    if(h1Ranks[i] == 2 && i > h1Max){
+                        h1Max = i * 1.0;
+                    }
+                    if(h2Ranks[i] == 2 && i > h2Max){
+                        h2Max = i * 1.0;
+                    }
+                }
+                if(h1Max == 0){ // if there are no pairs, then choose the highest card (kicker)
+                    h1Max = judge.highestCard(h1Ranks);
+                }
+                if(h2Max == 0){ 
+                    h2Max = judge.highestCard(h2Ranks);
+                }
+                h1Value += h1Max;
+                h2Value += h2Max;
+            }else{
+                // If there is no hand type, then choose the highest value card.
+                double h1HighValue = judge.highestCard(h1Ranks);
+                double h2HighValue = judge.highestCard(h2Ranks);
+                while(h1HighValue == h2HighValue && h1HighValue != 0){
+                    h1Ranks[judge.highestIndex(h1Ranks)] = 0;
+                    h2Ranks[judge.highestIndex(h2Ranks)] = 0;
+                    h1HighValue = judge.highestCard(h1Ranks);
+                    h2HighValue = judge.highestCard(h2Ranks);
+                }
+                h1Value += h1HighValue;
+                h2Value += h2HighValue;
+            }
+        }
+
+        if(h1Value > h2Value){
             System.out.println("Hand one wins");
-        }else if(hand1Value < hand2Value){
+        }else if(h1Value < h2Value){
             System.out.println("Hand two wins");
         }else{
-            // tie.
-            // Can ignore Royal Flush for ties because only 1 hand can get it.
-            // Straight Flush ranked by highest ranking card.
-            // Four of Kind ranked by highest ranking 4-card set.
-            // Full House ranked by highest ranking 3-card set.
-            // Flush ranked by highest ranking card.
-            // Straight ranked by highest ranking card.
-            // Three of a Kind ranked by highest 3 of a kind - if same, then highest kicker
-            // Two Pairs ranked by highest pair - lowest pair - kicker card
-            // One Pair ranked by highest pair - kicker card
-            
-
+            // If the values are completely the same.
+            System.out.println("Hands tied");
         }
     }
 
-
-    // Return Value of the hand passed into the method.
-    public int returnValue(String hand){
-        int value = 0;
+    /*
+        Counts the number of each rank in a given hand.
+        Params:
+            String hand: The String representation of a pokerhand.
+    */
+    public int[] countRanks(String hand){
         int[] ranks = new int[15]; // No item in 0 or 1.
-        int[] suits = new int[5];
         // Try & Catch Statement to make sure hands are entered correctly and to count the cards.
         try{
             for(int i = 0; i < 5; i++){
@@ -81,6 +136,33 @@ public class PokerJudge{
                     break;
                 }
                 ranks[rankIndex]++;
+            }    
+        }catch(Exception e){
+            System.out.println("The ranks in the hand entered as a parameter does not fit with the rules: \n");
+            System.out.println("\t" + hand + "\n");
+            System.exit(1);
+        }
+        if(isStraight(1,ranks)){
+            // Dealing with choosing ace for straights & straight flush.
+            if(ranks[1] == ranks[2]  && ranks[2] == 1){
+                ranks[14] = 0;
+            }else if(ranks[13] == ranks[14] && ranks[14] == 1){
+                ranks[1] = 0;
+            }
+        }
+        return ranks;
+    }
+
+    /*
+        Counts the number of suits in a given hand.
+        Params:
+            String hand: The String representation of a pokerhand.
+    */
+    public int[] countSuits(String hand){
+        int[] suits = new int[5];
+        // Try & Catch Statement to make sure hands are entered correctly and to count the cards.
+        try{
+            for(int i = 0; i < 5; i++){
                 char cSuit = hand.charAt((i*2)+1);
                 switch(cSuit){
                     case 'H': suits[0]++;
@@ -94,67 +176,77 @@ public class PokerJudge{
                 }
             }    
         }catch(Exception e){
-            System.out.println("The hand entered as a parameter does not fit with the rules: \n");
+            System.out.println("The suits in the hand entered as a parameter does not fit with the rules: \n");
             System.out.println("\t" + hand + "\n");
-            e.printStackTrace(System.out);
             System.exit(1);
         }
-
-        int handRank = 0;
-
-        if(isRoyalFlush(ranks,suits)){
-            handRank = 9;
-        }else if(isStraightFlush(ranks, suits)){
-            handRank = 8;
-        }else if(isFourOfKind(ranks)){
-            handRank = 7;
-        }else if(isFullHouse(ranks)){
-            handRank = 6;
-        }else if(isFlush(suits)){
-            handRank = 5;
-        }else if(isStraight(1, ranks)){
-            handRank = 4;
-        }else if(isThreeOfKind(ranks)){
-            handRank = 3;
-        }else if(isTwoPair(ranks)){
-            handRank = 2;
-        }else if(isOnePair(ranks)){
-            handRank = 1;
-        }
-
-        /*
-        System.out.println("Highest Card?: " + Integer.toString(highestCard(ranks)));
-        System.out.println("Is One Pair?: " + Boolean.toString(isOnePair(ranks)));
-        System.out.println("Is Two Pair?: " + Boolean.toString(isTwoPair(ranks)));
-        System.out.println("Is Three of a Kind?: " + Boolean.toString(isThreeOfKind(ranks)));
-        System.out.println("Is Full House?: " + Boolean.toString(isFullHouse(ranks)));
-        System.out.println("Is Four of a Kind?: " + Boolean.toString(isFourOfKind(ranks)));
-        System.out.println("Is Flush?: " + Boolean.toString(isFlush(suits)));
-        System.out.println("Is Straight?: " + Boolean.toString(isStraight(1,ranks)));
-        System.out.println("Is Straight Flush?: " + Boolean.toString(isStraightFlush(ranks, suits)));
-        System.out.println("Is Royal Flush?: " + Boolean.toString(isRoyalFlush(ranks, suits)));
-        */
-        value = handRank;
-
-        System.out.println(Arrays.toString(ranks));
-        System.out.println(Arrays.toString(suits));
-        return value;
+        return suits;
     }
 
     /*
-        Returns the card index with the highest value in the hand.
+        Return Value of the hand passed into the method.
+        Params:
+            int[] ranks: An int array where the index is the card # and the value is the count in the hand.
+            int[] suits: An int array where the index is the card suit and the value is the count in the hand.
     */
-    public int highestCard(int[] rankCount){
+    public double getHandValue(int[] ranks, int[] suits){
+
+        double handRank = 0.0;
+
+        if(isRoyalFlush(ranks,suits)){
+            handRank += 10;
+        }else if(isStraightFlush(ranks, suits)){
+            handRank += 9;
+        }else if(isFourOfKind(ranks)){
+            handRank += 8;
+        }else if(isFullHouse(ranks)){
+            handRank += 7;
+        }else if(isFlush(suits)){
+            handRank += 6;
+        }else if(isStraight(1, ranks)){
+            handRank += 5;
+        }else if(isThreeOfKind(ranks)){
+            handRank += 4;
+        }else if(isTwoPair(ranks)){
+            handRank += 3;
+        }else if(isOnePair(ranks)){
+            handRank += 2;
+        }else{
+            handRank += highestCard(ranks); 
+        }
+        return handRank;
+    }
+
+    /*
+        Returns the highest weighted card rank (weighted by the amount of such rank).
+        Params:
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
+    */
+    public double highestCard(int[] rankCount){
+        int i = highestIndex(rankCount);
+        return i * 1.0 * rankCount[i]; // weights the highest card based on how many there are
+        // (pair of 2 is greater than a single 3).
+    }
+
+    /*
+        Returns the rank of the highest card.
+        Params:
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
+    */
+    public int highestIndex(int[] rankCount){
+        int max = 0;
         for(int i = rankCount.length - 1; i>= 0; i--){
             if(rankCount[i] > 0){
                 return i;
             }
         }
-        return 0;
+        return max;
     }
 
     /*
         Returns whether or not the hand has one pair.
+        Params:
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
     */
     public boolean isOnePair(int[] rankCount){
         for(int i = 0; i < rankCount.length; i++){
@@ -165,6 +257,11 @@ public class PokerJudge{
         return false;
     }
 
+    /*
+        Determines if a given hand has Two Pairs in its hand.
+        Params:
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
+    */
     public boolean isTwoPair(int[] rankCount){
         boolean firstPair = false;
         boolean secondPair = false;
@@ -182,6 +279,11 @@ public class PokerJudge{
         return false;
     }
 
+    /*
+        Determines if a given hand is a Three of a Kind
+        Params:
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
+    */
     public boolean isThreeOfKind(int[] rankCount){
         // Three of a Kind: 3 cards of same rank, highest non related card is kicker
         for(int i = 0; i < rankCount.length; i++){
@@ -192,6 +294,11 @@ public class PokerJudge{
         return false;
     }
 
+    /*
+        Determines if a given hand is a Full House
+        Params:
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
+    */
     public boolean isFullHouse(int[] rankCount){
         // Full House: 3 cards of the same rank and 2 cards of another rank (highest rank of 3 of a kind determines rank)
         boolean threeSame = false;
@@ -210,6 +317,11 @@ public class PokerJudge{
         return false;
     }
 
+    /*
+        Determines if a given hand is a Four of a Kind
+        Params:
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
+    */
     public boolean isFourOfKind(int[] rankCount){
         // Four of a Kind: 4 cards of the same rank, 5th card is kicker
 
@@ -226,7 +338,7 @@ public class PokerJudge{
         Params:
             int startIndex: the start point from which the cards will be checked.
                 (i.e start from 1 starts checking for straights from 1 onward.)
-            int[] rankCount: an int array counting each rank and their count in the hand.
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
     */
     public boolean isStraight(int startIndex, int[] rankCount){
         // Straight: 5 consecutive cards of different suits (highest card)
@@ -253,7 +365,7 @@ public class PokerJudge{
     /*
         Determines if a given hand's cards are all the same suit.
         Params:
-            int[] suitCount: an int array counting each suit and their count in the hand.
+            int[] suitCount: An int array where the index is the card suit and the value is the count in the hand.
     */
     public boolean isFlush(int[] suitCount){
         // Flush: 5 cards of the same suit (highest card determines rank of flush)
@@ -274,8 +386,8 @@ public class PokerJudge{
     /*
         Determines if a given hand is a Straight Flush.
         Params:
-            int[] rankCount: an int array counting each rank and their count in the hand.
-            int[] suitCount: an int array counting each suit and their count in the hand.
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
+            int[] suitCount: An int array where the index is the card suit and the value is the count in the hand.
     */
     public boolean isStraightFlush(int[] rankCount, int[] suitCount){
         // Any straight with all 5 cards of the same suit.
@@ -294,8 +406,8 @@ public class PokerJudge{
     /*
         Determines if a given hand is a Royal Flush.
         Params:
-            int[] rankCount: an int array counting each rank and their count in the hand.
-            int[] suitCount: an int array counting each suit and their count in the hand.
+            int[] rankCount: An int array where the index is the card # and the value is the count in the hand.
+            int[] suitCount: An int array where the index is the card suit and the value is the count in the hand.
     */
     public boolean isRoyalFlush(int[] rankCount, int[] suitCount){
         // Straight from 10 - Ace with all 5 cards of same suit.
@@ -310,19 +422,6 @@ public class PokerJudge{
         }
 
         return false;
-    }
-
-
-
-    /*
-        Get the Kicker (Tie-Breaker) of a hand
-        Params:
-            String hand: String containing the cards in a hand
-            String type: String containing the type of a hand.
-    */
-    public int getKicker(String hand, String type){
-
-        return -1;
     }
 
 
