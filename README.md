@@ -1,1 +1,26 @@
 # PokerJudge
+
+A Java program that decides whether which of two given hands is the better poker hand.
+
+## How to use
+
+### Compile Java Code
+javac PokerJudge.java
+
+### Run Java Code
+java Poker Judge hand1 hand2
+
+Where hand1 and hand2 are poker hands with 5 cards represented in a two character format: (Value)(Suit).
+An example of this is: AS (Ace)(Spades)
+
+S = Spades
+C = Clubs
+D = Diamonds
+H = Hearts
+
+2-9 = 2-9
+T = Ten
+J = Jack
+Q = Queen
+K = King
+A = Ace
